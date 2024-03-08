@@ -23,7 +23,7 @@
     <div class="container mt-4 pb-5">
       <!-- todo list -->
       
-      <div class="col-6 m-auto bg-primary-subtle rounded p-3">
+      <div class="col-10 col-md-6 m-auto bg-primary-subtle rounded p-3">
         <form class="m-3">
           <h1 class="h3 mb-3 fw-normal">Todo List</h1>
       
@@ -75,14 +75,14 @@
           </div>
           <div class="modal-body">
             <div class="form-floating pb-2">
-              <input type="text" class="form-control" id="todo" placeholder="to do list">
+              <input type="text" class="form-control" id="todo-entry-edit-input" placeholder="to do list">
               <label for="todo">Edit Todo</label>
             </div>
-            <button type="button" class="btn btn-success">Mark as completed</button>
+            <button type="button" class="btn btn-success" id="mark-complete">Mark as completed</button>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
+            <button type="button" class="btn btn-primary" id="save-change">Save changes</button>
           </div>
         </div>
       </div>
@@ -184,8 +184,8 @@ function fetchTodo(token){
           </div>`
         ))
 
-        document.getElementById("todo-list").innerHTML = todoList;
-        }else if(data.entry === undefined){
+        document.getElementById("todo-list").innerHTML = todoList.join('');
+        }else{
         document.getElementById("todo-list").innerHTML = "";
         }
       }
@@ -225,6 +225,7 @@ if(todoNewEntry.value.length>0){
 }else{
   alert("Entry cannot be empty input")
 }
+todoNewEntry.value="";
   
 
 }
@@ -292,6 +293,101 @@ if(todoNewEntry.value.length>0){
   })
   .catch(error=>console.log(" Error at handleChecked()",error))
 
+ }
+
+ //function untuk handle edit todo
+ function handleEditEntry(element){
+  let markCompleteBtn = document.getElementById("mark-complete");
+  let saveChangeBtn = document.getElementById("save-change");
+  let editInput = document.getElementById("todo-entry-edit-input");
+
+  saveChangeBtn.addEventListener("click",function(e){
+    e.preventDefault();
+    saveEditedEntryModal(element);
+
+   
+  }
+  )
+  markCompleteBtn.addEventListener("click",function(e){
+    e.preventDefault();
+    markCompleteModal(element);
+  }
+  )
+
+
+
+
+  }
+
+function markCompleteModal(element){
+  fetch(`https://api.kelasprogramming.com/todo/${element.id}`,{
+    method:"PUT",
+    headers:{
+      "Content-Type": "application/json",
+      "Authorization":`Bearer ${token}`
+
+    },
+    body:JSON.stringify({
+      "completed":1
+    })
+   })
+  .then(response=>response.json())
+  .then(data=>{
+    console.log("markCompleteModal OK");
+    fetchTodo(token);
+  })
+  .catch(error=>console.log("markCompleteModal NOT OK",error));
+
+
+
+}
+ 
+
+ 
+
+ function saveEditedEntryModal(element){
+  let editInput = document.getElementById("todo-entry-edit-input");
+  let completed= false;
+  let alertShown = false;
+
+
+
+    if(editInput.value.length>0){
+      fetch(`https://api.kelasprogramming.com/todo/${element.id}`,{
+    method:"PUT",
+    headers:{
+      "Content-Type": "application/json",
+      "Authorization":`Bearer ${token}`
+
+    },
+    body:JSON.stringify({
+      "details":editInput.value,
+      "completed":`${completed? 0 : 1}`
+    })
+   })
+  .then(response=>response.json())
+  .then(data=>{
+    console.log("saveEditedEntryModal() OK, ID :", element.id);
+   
+    fetchTodo(token);
+    editInput.innerText="";
+
+  })
+  .catch(error=>console.log(" saveEditedEntryModal() NOT OK",error));
+
+    }else{
+      // alert("Input cannot be Empty");
+      if (!alertShown) {
+        alert("Input cannot be Empty");
+        alertShown = true; 
+      }
+      //alertShown adalah variable untuk pantau state, sama ada dah tunjuk alert tersebut sebelum ini atau tidak
+      //setiap kali trigger alert ni, reset state 
+      //kalau takde pantau state ni, alert akan compunding dan akan spam alert pop up banyak kali.
+      //problem seems due to how i write the conditionals/loop codes
+
+
+    }
  }
 
 
