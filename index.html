@@ -36,30 +36,7 @@
         </form>
 
         <div class="m-3" id="todo-list">
-          <!-- <div class="pt-1 d-flex justify-content-between">
-            Belajar HTML
-            <div class="d-flex" >
-              <button class="btn btn-success me-1"><i class="bi bi-check"></i></button>
-              <button class='btn btn-primary me-1' data-bs-toggle="modal" data-bs-target="#editTodo" ><i class="bi bi-pencil"></i></button>
-              <button class='btn btn-danger'><i class="bi bi-trash"></i></button>
-            </div>
-          </div>
-          <div class="pt-1 d-flex justify-content-between">
-            Belajar CSS
-            <div class="d-flex" >
-              <button class="btn btn-success me-1"><i class="bi bi-check"></i></button>
-              <button class='btn btn-primary me-1' data-bs-toggle="modal" data-bs-target="#editTodo" ><i class="bi bi-pencil"></i></button>
-              <button class='btn btn-danger'><i class="bi bi-trash"></i></button>
-            </div>
-          </div>
-          <div class="pt-1 d-flex justify-content-between">
-            Belajar JavaScript
-            <div class="d-flex" >
-              <button class="btn btn-warning me-1"><i class="bi bi-x"></i></button>
-              <button class='btn btn-primary me-1' data-bs-toggle="modal" data-bs-target="#editTodo" ><i class="bi bi-pencil"></i></button>
-              <button class='btn btn-danger'><i class="bi bi-trash"></i></button>
-            </div>  
-          </div> -->
+ 
         </div>
 
       </div>
@@ -78,11 +55,15 @@
               <input type="text" class="form-control" id="todo-entry-edit-input" placeholder="to do list">
               <label for="todo">Edit Todo</label>
             </div>
-            <button type="button" class="btn btn-success" id="mark-complete">Mark as completed</button>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="mark-complete">
+                  <label class="form-check-label" for="flexSwitchCheckDefault" >Mark as completed</label>
+                  <!-- <button type="button" class="btn btn-success" id="mark-complete">Mark as completed</button> -->
+              </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="save-change">Save changes</button>
+            <button type="button" class="btn btn-primary" id="save-change-modal" >Save changes</button>
           </div>
         </div>
       </div>
@@ -96,6 +77,9 @@
 
 ///DEKLARASI Token, dapatkan token auth dari localstorage kalau ada
 const token =localStorage.getItem("token");
+
+
+
 
 //
 document.addEventListener("DOMContentLoaded",function(){
@@ -178,7 +162,7 @@ function fetchTodo(token){
             ${todo.details}
             <div class="d-flex" >
               ${todo.completed === 1 ? `<button class="btn btn-success me-1" id="${todo.id}"  onclick="toggleUncheck(this)"><i class="bi bi-check"></i></button>`: `<button class="btn btn-warning me-1" id="${todo.id}"  onclick="toggleCheck(this)"><i class="bi bi-x"></i></button>` }
-              <button class='btn btn-primary me-1' data-bs-toggle="modal" id="${todo.id}"  onclick="handleEditEntry(this)" data-bs-target="#editTodo" ><i class="bi bi-pencil"></i></button>
+              <button class='btn btn-primary me-1' data-bs-toggle="modal" id="${todo.id}"   data-bs-target="#editTodo" onclick="editEntry(this)" ><i class="bi bi-pencil"></i></button>
               <button class='btn btn-danger delete-button' id="${todo.id}"  onclick="handleDelete(this)"><i class="bi bi-trash"></i></button>
             </div>
           </div>`
@@ -223,7 +207,7 @@ if(todoNewEntry.value.length>0){
   .catch(err=>console.log("handleAddEntry() NOT OK:", err));
 
 }else{
-  alert("Entry cannot be empty input")
+  return
 }
 todoNewEntry.value="";
   
@@ -274,6 +258,7 @@ todoNewEntry.value="";
 
  }
 
+ //function untuk handle uncheck
  function toggleUncheck(element){
   fetch(`https://api.kelasprogramming.com/todo/${element.id}`,{
     method:"PUT",
@@ -295,104 +280,51 @@ todoNewEntry.value="";
 
  }
 
- //function untuk handle edit todo
- function handleEditEntry(element){
-  let markCompleteBtn = document.getElementById("mark-complete");
-  let saveChangeBtn = document.getElementById("save-change");
+ function editEntry(element) {
   let editInput = document.getElementById("todo-entry-edit-input");
+  let markComplete = document.getElementById("mark-complete");
 
-  saveChangeBtn.addEventListener("click",function(e){
-    e.preventDefault();
-    saveEditedEntryModal(element);
+  markComplete.addEventListener("change", function() {
+    console.log("changed", markComplete.checked);
+  });
 
-   
-  }
-  )
-  markCompleteBtn.addEventListener("click",function(e){
-    e.preventDefault();
-    markCompleteModal(element);
-  }
-  )
+  const saveChangesBtn = document.getElementById("save-change-modal");
 
+  saveChangesBtn.addEventListener("click", function(event) {
+    event.preventDefault();
 
+    const token = localStorage.getItem("token");
 
-
-  }
-
-function markCompleteModal(element){
-  fetch(`https://api.kelasprogramming.com/todo/${element.id}`,{
-    method:"PUT",
-    headers:{
-      "Content-Type": "application/json",
-      "Authorization":`Bearer ${token}`
-
-    },
-    body:JSON.stringify({
-      "completed":1
-    })
-   })
-  .then(response=>response.json())
-  .then(data=>{
-    console.log("markCompleteModal OK");
-    fetchTodo(token);
-  })
-  .catch(error=>console.log("markCompleteModal NOT OK",error));
-
-
-
-}
- 
-
- 
-
- function saveEditedEntryModal(element){
-  let editInput = document.getElementById("todo-entry-edit-input");
-  let completed= false;
-  let alertShown = false;
-
-
-
-    if(editInput.value.length>0){
-      fetch(`https://api.kelasprogramming.com/todo/${element.id}`,{
-    method:"PUT",
-    headers:{
-      "Content-Type": "application/json",
-      "Authorization":`Bearer ${token}`
-
-    },
-    body:JSON.stringify({
-      "details":editInput.value,
-      "completed":`${completed? 0 : 1}`
-    })
-   })
-  .then(response=>response.json())
-  .then(data=>{
-    console.log("saveEditedEntryModal() OK, ID :", element.id);
-   
-    fetchTodo(token);
-    editInput.innerText="";
-
-  })
-  .catch(error=>console.log(" saveEditedEntryModal() NOT OK",error));
+    let completedValue = markComplete.checked ? 1 : 0;
+    if(editInput.value.length<=0){
+      return;
 
     }else{
-      // alert("Input cannot be Empty");
-      if (!alertShown) {
-        alert("Input cannot be Empty");
-        alertShown = true; 
-      }
-      //alertShown adalah variable untuk pantau state, sama ada dah tunjuk alert tersebut sebelum ini atau tidak
-      //setiap kali trigger alert ni, reset state 
-      //kalau takde pantau state ni, alert akan compunding dan akan spam alert pop up banyak kali.
-      //problem seems due to how i write the conditionals/loop codes
-
-
+      // return;
+      fetch(`https://api.kelasprogramming.com/todo/${element.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        "details": editInput.value,
+        "completed": completedValue
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      // alert(`editEntry() fetch OK, ID ${element.id}`);
+      location.reload();
+      fetchTodo(token);
+    })
+    .catch(error => console.log("error", error));
     }
- }
 
+   
+  });
+}
 
-
-     
     </script>
   </body>
 </html>
